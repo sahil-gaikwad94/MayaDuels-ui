@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 import {
   Award,
   Calendar,
@@ -10,21 +10,22 @@ import {
   Swords,
   Target,
   TrendingUp,
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { Page, Badge, ProgressBar, SectionHeader } from '../components/Page';
-import { IdentityCapsule } from '../components/IdentityCapsule';
-import { AvatarToken } from '../components/AvatarToken';
-import { Ring, Sparkline } from '../components/Charts';
-import { DOMAINS, divisionFor, nextDivision } from '../lib/domains';
-import { ACHIEVEMENTS } from '../lib/demoData';
-import { useAppState } from '../state/AppState';
-import { cn, formatNumber } from '../lib/utils';
-import { cardRise, listStagger } from '../lib/motion';
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Page, Badge, ProgressBar, SectionHeader } from "../components/Page";
+import { IdentityCapsule } from "../components/IdentityCapsule";
+import { AvatarToken } from "../components/AvatarToken";
+import { Ring, Sparkline } from "../components/Charts";
+import { DOMAINS, divisionFor, nextDivision } from "../lib/domains";
+import { ACHIEVEMENTS } from "../lib/demoData";
+import { useAppState } from "../state/AppState";
+import { cn, formatNumber } from "../lib/utils";
+import { cardRise, listStagger } from "../lib/motion";
 
 export function ProfileScreen() {
   const navigate = useNavigate();
-  const { profile, matchesPlayed, wins, streak, xp, sparks, vault } = useAppState();
+  const { profile, matchesPlayed, wins, streak, xp, sparks, vault } =
+    useAppState();
   const division = divisionFor(1482);
   const next = nextDivision(1482);
   const winRate = matchesPlayed ? Math.round((wins / matchesPlayed) * 100) : 0;
@@ -32,8 +33,12 @@ export function ProfileScreen() {
   return (
     <div className="pb-32">
       <Page width="md" className="pt-[calc(var(--safe-t)+14px)]">
-        <IdentityCapsule />
-
+        <div className="flex justify-between items-center">
+          <span className="overline">ARCADE MEMBERSHIP</span>
+          <button className="back-link" onClick={() => navigate("/onboarding")}>
+            Edit player pass ↗
+          </button>
+        </div>
         {/* Identity header */}
         <motion.div
           variants={cardRise}
@@ -46,11 +51,15 @@ export function ProfileScreen() {
             className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full opacity-50 blur-3xl"
             style={{
               background:
-                'radial-gradient(circle, rgba(0,245,212,0.28), transparent 70%)',
+                "radial-gradient(circle, rgba(0,245,212,0.28), transparent 70%)",
             }}
           />
           <div className="relative flex items-start gap-3.5">
-            <AvatarToken seed={profile.avatarSeed} size={64} ring={division.color} />
+            <AvatarToken
+              seed={profile.avatarSeed}
+              size={64}
+              ring={division.color}
+            />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <h1 className="truncate font-display text-[1.35rem] font-semibold leading-none tracking-[-0.02em]">
@@ -64,7 +73,7 @@ export function ProfileScreen() {
               </p>
             </div>
             <button
-              onClick={() => navigate('/settings')}
+              onClick={() => navigate("/settings")}
               aria-label="Profile settings"
               className="press flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-faint"
             >
@@ -74,10 +83,10 @@ export function ProfileScreen() {
 
           <div className="relative mt-4 grid grid-cols-4 gap-2 border-t border-line pt-3.5">
             {[
-              { label: 'Rating', value: formatNumber(1482) },
-              { label: 'Duels', value: matchesPlayed || 148 },
-              { label: 'Win rate', value: `${winRate || 58}%` },
-              { label: 'Streak', value: `${streak.count || 4}d` },
+              { label: "Rating", value: formatNumber(1482) },
+              { label: "Duels", value: matchesPlayed },
+              { label: "Win rate", value: `${winRate}%` },
+              { label: "Streak", value: `${streak.count}d` },
             ].map((s) => (
               <div key={s.label} className="text-center">
                 <p className="tnum font-display text-[15px] font-semibold leading-none">
@@ -94,13 +103,13 @@ export function ProfileScreen() {
           <div className="surface-card p-3.5">
             <div className="flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-cyan" />
-              <p className="label-mono">Level {Math.floor((xp || 2480) / 1000) + 1}</p>
+              <p className="label-mono">Level {Math.floor(xp / 1000) + 1}</p>
             </div>
             <p className="tnum mt-1.5 font-display text-lg font-semibold leading-none">
-              {(xp || 2480).toLocaleString()} XP
+              {xp.toLocaleString()} XP
             </p>
             <div className="mt-2">
-              <ProgressBar value={((xp || 2480) % 1000) / 10} height={4} />
+              <ProgressBar value={(xp % 1000) / 10} height={4} />
             </div>
           </div>
           <div className="surface-card p-3.5">
@@ -109,9 +118,11 @@ export function ProfileScreen() {
               <p className="label-mono">Sparks</p>
             </div>
             <p className="tnum mt-1.5 font-display text-lg font-semibold leading-none">
-              {(sparks || 340).toLocaleString()}
+              {sparks.toLocaleString()}
             </p>
-            <p className="mt-2 text-[10.5px] text-faint">cosmetic currency only</p>
+            <p className="mt-2 text-[10.5px] text-faint">
+              cosmetic currency only
+            </p>
           </div>
         </div>
 
@@ -122,18 +133,20 @@ export function ProfileScreen() {
               <p className="label-mono">Division progress</p>
               <p className="mt-1 font-display text-[15px] font-semibold">
                 {division.name}
-                {next && (
-                  <span className="text-faint"> → {next.name}</span>
-                )}
+                {next && <span className="text-faint"> → {next.name}</span>}
               </p>
             </div>
             <span className="tnum font-mono text-[11px] text-faint">
-              {next ? `${next.min - 1482} to go` : 'peak'}
+              {next ? `${next.min - 1482} to go` : "peak"}
             </span>
           </div>
           <div className="mt-2.5">
             <ProgressBar
-              value={next ? ((1482 - division.min) / (next.min - division.min)) * 100 : 100}
+              value={
+                next
+                  ? ((1482 - division.min) / (next.min - division.min)) * 100
+                  : 100
+              }
               color={division.color}
               height={5}
             />
@@ -158,7 +171,12 @@ export function ProfileScreen() {
                 variants={cardRise}
                 className="surface-card flex items-center gap-3 p-3"
               >
-                <Ring progress={d.mastery / 100} size={38} stroke={3} color={d.accent}>
+                <Ring
+                  progress={d.mastery / 100}
+                  size={38}
+                  stroke={3}
+                  color={d.accent}
+                >
                   <span className="tnum font-mono text-[9.5px] text-muted">
                     {d.mastery}
                   </span>
@@ -201,14 +219,14 @@ export function ProfileScreen() {
             <div>
               <p className="label-mono">Plain-language insight</p>
               <p className="mt-2 text-[12px] leading-relaxed text-muted">
-                Strongest in <span className="text-ink">Web runtime</span> and{' '}
-                <span className="text-ink">Core CS</span>. Biggest opportunity:{' '}
+                Strongest in <span className="text-ink">Web runtime</span> and{" "}
+                <span className="text-ink">Core CS</span>. Biggest opportunity:{" "}
                 <span className="text-amber">Security</span> — 38% mastery with
                 three concepts due.
               </p>
             </div>
             <button
-              onClick={() => navigate('/vault?mode=weakness')}
+              onClick={() => navigate("/vault?mode=weakness")}
               className="press mt-3 flex h-9 items-center justify-center gap-1.5 rounded-full bg-cyan/12 text-[12px] font-medium text-cyan"
             >
               <Target className="h-3.5 w-3.5" /> Review gaps
@@ -223,7 +241,7 @@ export function ProfileScreen() {
             subtitle={`${ACHIEVEMENTS.filter((a) => a.earned).length} of ${ACHIEVEMENTS.length} unlocked`}
             action={
               <button
-                onClick={() => navigate('/locker')}
+                onClick={() => navigate("/locker")}
                 className="text-[11.5px] font-medium text-cyan"
               >
                 Locker
@@ -235,8 +253,8 @@ export function ProfileScreen() {
               <div
                 key={a.id}
                 className={cn(
-                  'surface-card flex flex-col items-center px-2 py-3 text-center',
-                  !a.earned && 'opacity-45',
+                  "surface-card flex flex-col items-center px-2 py-3 text-center",
+                  !a.earned && "opacity-45",
                 )}
               >
                 <span className="text-lg">{a.icon}</span>
@@ -258,9 +276,9 @@ export function ProfileScreen() {
             <div className="min-w-0 flex-1">
               <p className="text-[12px] font-medium text-ink">Joined</p>
               <p className="text-[10.5px] text-faint">
-                {new Date(profile.joinedAt).toLocaleDateString('en-US', {
-                  month: 'long',
-                  year: 'numeric',
+                {new Date(profile.joinedAt).toLocaleDateString("en-US", {
+                  month: "long",
+                  year: "numeric",
                 })}
               </p>
             </div>
@@ -269,13 +287,15 @@ export function ProfileScreen() {
           <div className="surface-card flex items-center gap-3 p-3.5">
             <Shield className="h-4 w-4 shrink-0 text-faint" />
             <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-medium text-ink">Account linking</p>
+              <p className="text-[12px] font-medium text-ink">
+                Account linking
+              </p>
               <p className="text-[10.5px] text-faint">
                 Preserve handle, rating and history across devices
               </p>
             </div>
             <button
-              onClick={() => navigate('/settings')}
+              onClick={() => navigate("/settings")}
               className="press rounded-full border border-cyan-line/50 bg-cyan/10 px-3 py-1.5 text-[11.5px] font-medium text-cyan"
             >
               Link
@@ -284,7 +304,8 @@ export function ProfileScreen() {
         </div>
 
         <p className="mt-5 text-center text-[10px] leading-relaxed text-faint/70">
-          No fabricated employer, school or verification is shown on any profile.
+          No fabricated employer, school or verification is shown on any
+          profile.
         </p>
       </Page>
     </div>
@@ -293,7 +314,7 @@ export function ProfileScreen() {
 
 /** Lightweight six-axis radar — supporting visual only, never the sole summary. */
 function RadarChart() {
-  const axes = ['AI', 'Infra', 'Data', 'Web', 'Core', 'Sec'];
+  const axes = ["AI", "Infra", "Data", "Web", "Core", "Sec"];
   const values = [72, 64, 51, 81, 68, 38];
   const size = 132;
   const c = size / 2;
@@ -303,10 +324,10 @@ function RadarChart() {
     return [c + Math.cos(angle) * radius, c + Math.sin(angle) * radius];
   };
   const polygon = (radius: number) =>
-    axes.map((_, i) => point(i, radius).join(',')).join(' ');
+    axes.map((_, i) => point(i, radius).join(",")).join(" ");
   const valuePoints = values
-    .map((v, i) => point(i, (v / 100) * r).join(','))
-    .join(' ');
+    .map((v, i) => point(i, (v / 100) * r).join(","))
+    .join(" ");
 
   return (
     <svg viewBox={`0 0 ${size} ${size}`} className="h-[132px] w-[132px]">

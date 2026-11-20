@@ -325,6 +325,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   );
 
   const resetAll = useCallback(() => {
+    localStorage.removeItem('mayaduels.matchArchive');
+    Object.keys(localStorage).filter(k=>k.startsWith('mayaduels.daily.')).forEach(k=>localStorage.removeItem(k));
+    sessionStorage.removeItem('mayaduels.lastDuel');
     setState({ ...defaultState, settings: state.settings });
     toast({ title: 'Local demo data reset', tone: 'default' });
   }, [state.settings, toast]);

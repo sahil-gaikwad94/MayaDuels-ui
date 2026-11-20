@@ -1,11 +1,12 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react';
-import { ObjectGlyph } from './ObjectGlyph';
-import { useShouldRender3D } from '../hooks/useShouldRender3D';
-import { cn } from '../lib/utils';
-import type { ObjectKind } from '../three/objects';
+import { plates, artFor } from "./DomainCard";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { ObjectGlyph } from "./ObjectGlyph";
+import { useShouldRender3D } from "../hooks/useShouldRender3D";
+import { cn } from "../lib/utils";
+import type { ObjectKind } from "../three/objects";
 
 const HeroCanvas = lazy(() =>
-  import('../three/HeroCanvas').then((m) => ({ default: m.HeroCanvas })),
+  import("../three/HeroCanvas").then((m) => ({ default: m.HeroCanvas })),
 );
 
 interface HeroStageProps {
@@ -16,7 +17,7 @@ interface HeroStageProps {
   zoom?: number;
   /** Vertical offset of the object group. */
   offsetY?: number;
-  intensity?: 'hero' | 'card' | 'mini';
+  intensity?: "hero" | "card" | "mini";
   label?: string;
 }
 
@@ -26,11 +27,11 @@ interface HeroStageProps {
  */
 export function HeroStage({
   kind,
-  accent = '#00F5D4',
+  accent = "#00F5D4",
   className,
   zoom = 3.1,
   offsetY = 0,
-  intensity = 'hero',
+  intensity = "hero",
   label,
 }: HeroStageProps) {
   const { enabled } = useShouldRender3D();
@@ -39,22 +40,34 @@ export function HeroStage({
 
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || typeof IntersectionObserver === 'undefined') return;
+    if (!el || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(
       ([entry]) => setVisible(entry.isIntersecting),
-      { rootMargin: '120px' },
+      { rootMargin: "120px" },
     );
     io.observe(el);
     return () => io.disconnect();
   }, []);
 
   const show3D = enabled && visible;
-  const shadowOpacity = intensity === 'hero' ? 0.5 : 0.32;
+  const shadowOpacity = intensity === "hero" ? 0.5 : 0.32;
 
+  if (plates[kind] && intensity === "hero")
+    return (
+      <div
+        className={cn("artifact-stage", className)}
+        role="img"
+        aria-label={label || "Arena artifact"}
+        style={{
+          backgroundImage: `url(${artFor(kind)})`,
+          backgroundPosition: kind === "core" ? "80% center" : "center",
+        }}
+      />
+    );
   return (
     <div
       ref={containerRef}
-      className={cn('relative flex items-center justify-center', className)}
+      className={cn("relative flex items-center justify-center", className)}
       aria-label={label}
     >
       {/* Ambient brand glow behind the object */}

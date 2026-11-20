@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { readArchive } from "../lib/matchArchive";
+import { useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
   Bookmark,
@@ -11,34 +12,38 @@ import {
   Filter,
   Share2,
   X,
-} from 'lucide-react';
-import { Page, Badge } from '../components/Page';
-import { AvatarToken } from '../components/AvatarToken';
-import { MECHANICS, getDomain } from '../lib/domains';
-import { useAppState } from '../state/AppState';
-import { cn, formatClock, formatNumber } from '../lib/utils';
-import { sfx } from '../lib/audio';
-import type { DuelState } from '../lib/duel';
+} from "lucide-react";
+import { Page, Badge } from "../components/Page";
+import { AvatarToken } from "../components/AvatarToken";
+import { MECHANICS, getDomain } from "../lib/domains";
+import { useAppState } from "../state/AppState";
+import { cn, formatClock, formatNumber } from "../lib/utils";
+import { sfx } from "../lib/audio";
+import type { DuelState } from "../lib/duel";
 
-type FilterMode = 'all' | 'missed';
+type FilterMode = "all" | "missed";
 
-const LETTERS = ['A', 'B', 'C', 'D'];
+const LETTERS = ["A", "B", "C", "D"];
 
 export function MatchQAScreen() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const matchId = params.get("id");
   const { profile, saveVaultItem, toast } = useAppState();
-  const [filter, setFilter] = useState<FilterMode>('all');
+  const [filter, setFilter] = useState<FilterMode>("all");
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
 
   const duel = useMemo<DuelState | null>(() => {
     try {
-      const raw = sessionStorage.getItem('mayaduels.lastDuel');
+      if (matchId)
+        return readArchive().find((m) => m.matchId === matchId) ?? null;
+      const raw = sessionStorage.getItem("mayaduels.lastDuel");
       return raw ? (JSON.parse(raw) as DuelState) : null;
     } catch {
       return null;
     }
-  }, []);
+  }, [matchId]);
 
   if (!duel) {
     return (
@@ -50,7 +55,7 @@ export function MatchQAScreen() {
               Finish a duel and the two-player Q&A appears here.
             </p>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate("/")}
               className="press mt-4 rounded-full bg-cyan px-4 py-2 text-[13px] font-semibold text-[#04120F]"
             >
               Back to arena
@@ -63,7 +68,7 @@ export function MatchQAScreen() {
 
   const domain = getDomain(duel.domainId);
   const rounds = duel.rounds.filter((r) =>
-    filter === 'all' ? true : !r.self?.correct,
+    filter === "all" ? true : !r.self?.correct,
   );
   const missedCount = duel.rounds.filter((r) => !r.self?.correct).length;
 
@@ -80,13 +85,15 @@ export function MatchQAScreen() {
           </button>
           <span className="label-mono">match Q&A</span>
           <button
-            onClick={() => {
-              sfx.play('tap');
-              toast({
-                title: 'Q&A link copied',
-                message: 'Only you can open this result.',
-                tone: 'success',
-              });
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(
+                  `${domain.arena} · ${duel.outcome} · ${8 - missedCount}/8 correct`,
+                );
+                toast({ title: "Match summary copied", tone: "success" });
+              } catch {
+                toast({ title: "Clipboard unavailable", tone: "error" });
+              }
             }}
             aria-label="Share Q&A"
             className="press flex h-10 w-10 items-center justify-center rounded-full border border-line text-muted"
@@ -101,14 +108,22 @@ export function MatchQAScreen() {
             <h1 className="font-display text-[1.6rem] font-semibold leading-none tracking-[-0.03em]">
               {domain.arena}
             </h1>
-            <Badge tone={duel.outcome === 'WIN' ? 'cyan' : duel.outcome === 'LOSS' ? 'error' : 'neutral'}>
+            <Badge
+              tone={
+                duel.outcome === "WIN"
+                  ? "cyan"
+                  : duel.outcome === "LOSS"
+                    ? "error"
+                    : "neutral"
+              }
+            >
               {duel.outcome?.toLowerCase()}
             </Badge>
           </div>
           <p className="mt-1.5 text-[12px] text-faint">
-            {duel.opponentName} · {formatNumber(duel.opponentRating)} ·{' '}
+            {duel.opponentName} · {formatNumber(duel.opponentRating)} ·{" "}
             {duel.selfScore}–{duel.opponentScore}
-            {!duel.ratingEligible && ' · practice'}
+            {!duel.ratingEligible && " · practice"}
           </p>
         </div>
 
@@ -136,7 +151,11 @@ export function MatchQAScreen() {
               <span className="truncate text-[11.5px] text-muted">
                 {duel.opponentName}
               </span>
-              <AvatarToken seed={duel.startedAt % 97} size={26} ring="#FF2A85" />
+              <AvatarToken
+                seed={duel.startedAt % 97}
+                size={26}
+                ring="#FF2A85"
+              />
             </div>
           </div>
         </div>
@@ -146,18 +165,18 @@ export function MatchQAScreen() {
           <div className="flex rounded-full border border-line bg-surface/60 p-1">
             {(
               [
-                { id: 'all', label: `All rounds` },
-                { id: 'missed', label: `Missed (${missedCount})` },
+                { id: "all", label: `All rounds` },
+                { id: "missed", label: `Missed (${missedCount})` },
               ] as const
             ).map((f) => (
               <button
                 key={f.id}
                 onClick={() => setFilter(f.id)}
                 className={cn(
-                  'press rounded-full px-3 py-1.5 text-[11.5px] font-medium transition-colors',
+                  "press rounded-full px-3 py-1.5 text-[11.5px] font-medium transition-colors",
                   filter === f.id
-                    ? 'bg-white/8 text-ink'
-                    : 'text-faint hover:text-muted',
+                    ? "bg-white/8 text-ink"
+                    : "text-faint hover:text-muted",
                 )}
               >
                 {f.label}
@@ -179,12 +198,13 @@ export function MatchQAScreen() {
             const oppCorrect = Boolean(r.opponent?.correct);
             const isOpen = expanded[r.index] ?? !selfCorrect;
             const correctLabel =
-              q.choices.find((c) => c.id === correctId)?.label ?? '';
+              q.choices.find((c) => c.id === correctId)?.label ?? "";
             const selfLabel =
-              q.choices.find((c) => c.id === r.self?.choiceId)?.label ?? 'No answer';
+              q.choices.find((c) => c.id === r.self?.choiceId)?.label ??
+              "No answer";
             const oppLabel =
               q.choices.find((c) => c.id === r.opponent?.choiceId)?.label ??
-              'No answer';
+              "No answer";
 
             return (
               <motion.div
@@ -201,17 +221,17 @@ export function MatchQAScreen() {
                 >
                   <span
                     className={cn(
-                      'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-mono text-[11px] font-semibold',
+                      "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-mono text-[11px] font-semibold",
                       selfCorrect
-                        ? 'bg-cyan/15 text-cyan'
-                        : r.self?.status === 'timeout'
-                          ? 'bg-amber/15 text-amber'
-                          : 'bg-error/15 text-error',
+                        ? "bg-cyan/15 text-cyan"
+                        : r.self?.status === "timeout"
+                          ? "bg-amber/15 text-amber"
+                          : "bg-error/15 text-error",
                     )}
                   >
                     {selfCorrect ? (
                       <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                    ) : r.self?.status === 'timeout' ? (
+                    ) : r.self?.status === "timeout" ? (
                       <Clock className="h-3.5 w-3.5" />
                     ) : (
                       <X className="h-3.5 w-3.5" strokeWidth={3} />
@@ -239,13 +259,13 @@ export function MatchQAScreen() {
                       <span className="tnum font-mono">
                         {r.self?.elapsedMs
                           ? formatClock(r.self.elapsedMs)
-                          : 'timeout'}
+                          : "timeout"}
                       </span>
                       <span className="h-1 w-1 rounded-full bg-faint/50" />
                       <span
                         className={cn(
-                          'font-mono',
-                          selfCorrect ? 'text-cyan' : 'text-error',
+                          "font-mono",
+                          selfCorrect ? "text-cyan" : "text-error",
                         )}
                       >
                         {r.self?.points ?? 0} pts
@@ -254,8 +274,8 @@ export function MatchQAScreen() {
                   </div>
                   <ChevronDown
                     className={cn(
-                      'mt-1 h-4 w-4 shrink-0 text-faint transition-transform duration-300',
-                      isOpen && 'rotate-180',
+                      "mt-1 h-4 w-4 shrink-0 text-faint transition-transform duration-300",
+                      isOpen && "rotate-180",
                     )}
                   />
                 </button>
@@ -264,7 +284,7 @@ export function MatchQAScreen() {
                   {isOpen && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
+                      animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
                       className="overflow-hidden"
@@ -280,10 +300,10 @@ export function MatchQAScreen() {
                               <div
                                 key={c.id}
                                 className={cn(
-                                  'flex items-center gap-2 rounded-lg border px-2.5 py-1.5',
+                                  "flex items-center gap-2 rounded-lg border px-2.5 py-1.5",
                                   isCorrect
-                                    ? 'border-cyan/40 bg-cyan/8'
-                                    : 'border-line/60 bg-black/20',
+                                    ? "border-cyan/40 bg-cyan/8"
+                                    : "border-line/60 bg-black/20",
                                 )}
                               >
                                 <span className="font-mono text-[9.5px] text-faint">
@@ -291,8 +311,8 @@ export function MatchQAScreen() {
                                 </span>
                                 <span
                                   className={cn(
-                                    'flex-1 text-[11.5px]',
-                                    isCorrect ? 'text-ink' : 'text-muted',
+                                    "flex-1 text-[11.5px]",
+                                    isCorrect ? "text-ink" : "text-muted",
                                   )}
                                 >
                                   {c.label}
@@ -309,7 +329,10 @@ export function MatchQAScreen() {
                                     </span>
                                   )}
                                   {isCorrect && (
-                                    <Check className="h-3 w-3 text-cyan" strokeWidth={3} />
+                                    <Check
+                                      className="h-3 w-3 text-cyan"
+                                      strokeWidth={3}
+                                    />
                                   )}
                                 </div>
                               </div>
@@ -321,20 +344,20 @@ export function MatchQAScreen() {
                         <div className="mt-3 grid grid-cols-2 gap-2">
                           {[
                             {
-                              label: 'Your answer',
+                              label: "Your answer",
                               value: selfLabel,
                               correct: selfCorrect,
                               time: r.self?.elapsedMs,
                               points: r.self?.points ?? 0,
-                              tone: 'cyan' as const,
+                              tone: "cyan" as const,
                             },
                             {
-                              label: 'Rival answer',
+                              label: "Rival answer",
                               value: oppLabel,
                               correct: oppCorrect,
                               time: r.opponent?.elapsedMs,
                               points: r.opponent?.points ?? 0,
-                              tone: 'magenta' as const,
+                              tone: "magenta" as const,
                             },
                           ].map((lane) => (
                             <div
@@ -350,16 +373,18 @@ export function MatchQAScreen() {
                               <div className="mt-1.5 flex items-center gap-1.5 text-[9.5px]">
                                 <span
                                   className={cn(
-                                    'rounded-full px-1.5 py-[1px] font-mono uppercase tracking-wider',
+                                    "rounded-full px-1.5 py-[1px] font-mono uppercase tracking-wider",
                                     lane.correct
-                                      ? 'bg-cyan/15 text-cyan'
-                                      : 'bg-error/15 text-error',
+                                      ? "bg-cyan/15 text-cyan"
+                                      : "bg-error/15 text-error",
                                   )}
                                 >
-                                  {lane.correct ? 'correct' : 'missed'}
+                                  {lane.correct ? "correct" : "missed"}
                                 </span>
                                 <span className="tnum font-mono text-faint">
-                                  {lane.time ? formatClock(lane.time) : 'timeout'}
+                                  {lane.time
+                                    ? formatClock(lane.time)
+                                    : "timeout"}
                                 </span>
                                 <span className="tnum ml-auto font-mono text-faint">
                                   {lane.points}p
@@ -378,7 +403,10 @@ export function MatchQAScreen() {
                             <button
                               onClick={() => {
                                 const key = q.conceptId;
-                                setSaved((prev) => ({ ...prev, [key]: !prev[key] }));
+                                setSaved((prev) => ({
+                                  ...prev,
+                                  [key]: !prev[key],
+                                }));
                                 if (!saved[key]) {
                                   saveVaultItem({
                                     conceptId: q.conceptId,
@@ -388,20 +416,20 @@ export function MatchQAScreen() {
                                     why: q.explanation.mentalModel,
                                     tradeoff: q.explanation.tradeoff,
                                   });
-                                  sfx.play('tap');
+                                  sfx.play("tap");
                                   toast({
-                                    title: 'Saved to Vault',
+                                    title: "Saved to Vault",
                                     message: q.concept,
-                                    tone: 'success',
+                                    tone: "success",
                                   });
                                 }
                               }}
                               aria-label="Save concept"
                               className={cn(
-                                'press flex h-7 items-center gap-1 rounded-full border px-2 text-[10px] font-medium',
+                                "press flex h-7 items-center gap-1 rounded-full border px-2 text-[10px] font-medium",
                                 saved[q.conceptId]
-                                  ? 'border-cyan/40 bg-cyan/12 text-cyan'
-                                  : 'border-line text-faint',
+                                  ? "border-cyan/40 bg-cyan/12 text-cyan"
+                                  : "border-line text-faint",
                               )}
                             >
                               {saved[q.conceptId] ? (
@@ -409,7 +437,7 @@ export function MatchQAScreen() {
                               ) : (
                                 <Bookmark className="h-3 w-3" />
                               )}
-                              {saved[q.conceptId] ? 'saved' : 'save'}
+                              {saved[q.conceptId] ? "saved" : "save"}
                             </button>
                           </div>
                           <p className="mt-1.5 text-[12px] font-medium leading-snug text-ink">
@@ -445,7 +473,7 @@ export function MatchQAScreen() {
 
         <div className="mt-5">
           <button
-            onClick={() => navigate('/queue')}
+            onClick={() => navigate("/queue")}
             className="press flex h-12 w-full items-center justify-center rounded-full bg-cyan text-[14px] font-semibold text-[#04120F]"
           >
             Queue next duel
