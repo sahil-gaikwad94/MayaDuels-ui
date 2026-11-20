@@ -1,0 +1,22 @@
+:root {
+  --color-canvas: #090a0f;
+  --color-surface: #11141c;
+  --color-surface-raised: #181d28;
+  --color-line: #2a2e38;
+  --color-faint: #6e7789;
+  --color-cyan: #00f5d4;
+  --color-magenta: #ff2a85;
+  --color-amber: #ffb800;
+  --color-error: #ff5555;
+  --color-success: #4caf50;
+  --color-warning: #ffc107;
+  --color-info: #2196f3;
+}
+
+[data-theme='dark'] {
+  --color-canvas: #0a0a0a;
+  --color-surface: #141414;
+  --color-surface-raised: #1e1e1e;
+  --color-line: #2c2c2c;
+  --color-faint: #4a4a4a;
+}
