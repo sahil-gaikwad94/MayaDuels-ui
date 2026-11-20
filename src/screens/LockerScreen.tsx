@@ -1,44 +1,45 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Check, Lock, Sparkles } from 'lucide-react';
-import { Page, Badge, SectionHeader } from '../components/Page';
-import { IdentityCapsule } from '../components/IdentityCapsule';
-import { COSMETICS, type Cosmetic } from '../lib/demoData';
-import { useAppState } from '../state/AppState';
-import { cn } from '../lib/utils';
-import { cardRise, listStagger } from '../lib/motion';
-import { sfx, haptics } from '../lib/audio';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Check, Lock, Sparkles } from "lucide-react";
+import { Page, Badge, SectionHeader } from "../components/Page";
+import { IdentityCapsule } from "../components/IdentityCapsule";
+import { COSMETICS, type Cosmetic } from "../lib/demoData";
+import { useAppState } from "../state/AppState";
+import { cn } from "../lib/utils";
+import { cardRise, listStagger } from "../lib/motion";
+import { sfx, haptics } from "../lib/audio";
 
 const TABS = [
-  { id: 'frames', label: 'Avatar frames' },
-  { id: 'nameplates', label: 'Nameplates' },
-  { id: 'themes', label: 'Arena themes' },
+  { id: "frames", label: "Avatar frames" },
+  { id: "nameplates", label: "Nameplates" },
+  { id: "themes", label: "Arena themes" },
 ] as const;
 
-const RARITY_STYLES: Record<Cosmetic['rarity'], { label: string; color: string }> = {
-  common: { label: 'common', color: '#9FB4C7' },
-  rare: { label: 'rare', color: '#00F5D4' },
-  epic: { label: 'epic', color: '#FF2A85' },
-  legendary: { label: 'legendary', color: '#FFB800' },
+const RARITY_STYLES: Record<
+  Cosmetic["rarity"],
+  { label: string; color: string }
+> = {
+  common: { label: "common", color: "#9FB4C7" },
+  rare: { label: "rare", color: "#00F5D4" },
+  epic: { label: "epic", color: "#FF2A85" },
+  legendary: { label: "legendary", color: "#FFB800" },
 };
 
 export function LockerScreen() {
-  const { equipped, equip, profile, toast } = useAppState();
-  const [tab, setTab] = useState<(typeof TABS)[number]['id']>('frames');
+  const { sparks, equipped, equip, profile, toast } = useAppState();
+  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("frames");
 
   const items = COSMETICS.filter((c) => c.kind === tab);
   const equippedId =
-    tab === 'frames'
+    tab === "frames"
       ? profile.frameId
-      : tab === 'nameplates'
+      : tab === "nameplates"
         ? profile.nameplateId
         : profile.themeId;
 
   return (
     <div className="pb-32">
       <Page width="md" className="pt-[calc(var(--safe-t)+14px)]">
-        <IdentityCapsule />
-
         <div className="mt-6 flex items-end justify-between">
           <div>
             <h1 className="font-display text-[1.9rem] font-semibold leading-none tracking-[-0.03em]">
@@ -50,7 +51,9 @@ export function LockerScreen() {
           </div>
           <div className="flex items-center gap-1.5 rounded-full border border-amber/30 bg-amber/10 px-2.5 py-1">
             <Sparkles className="h-3 w-3 text-amber" />
-            <span className="tnum font-mono text-[11px] text-amber">340</span>
+            <span className="tnum font-mono text-[11px] text-amber">
+              {sparks}
+            </span>
           </div>
         </div>
 
@@ -61,8 +64,8 @@ export function LockerScreen() {
               key={t.id}
               onClick={() => setTab(t.id)}
               className={cn(
-                'press flex-1 rounded-full px-2 py-1.5 text-[11.5px] font-medium transition-colors',
-                tab === t.id ? 'bg-white/8 text-ink' : 'text-faint',
+                "press flex-1 rounded-full px-2 py-1.5 text-[11.5px] font-medium transition-colors",
+                tab === t.id ? "bg-white/8 text-ink" : "text-faint",
               )}
             >
               {t.label}
@@ -76,22 +79,22 @@ export function LockerScreen() {
             className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl"
             style={{
               background:
-                tab === 'frames'
+                tab === "frames"
                   ? COSMETICS.find((c) => c.id === equippedId)?.preview
-                  : 'linear-gradient(135deg,#1A1F2B,#0A0C12)',
+                  : "linear-gradient(135deg,#1A1F2B,#0A0C12)",
             }}
           >
-            <span className="font-display text-lg font-semibold text-ink/80">
+            <span className="font-display text-lg font-semibold text-white">
               {profile.handle.slice(0, 2).toUpperCase()}
             </span>
           </div>
           <div className="min-w-0 flex-1">
             <p className="label-mono">equipped</p>
             <p className="mt-1 truncate text-[13px] font-semibold text-ink">
-              {COSMETICS.find((c) => c.id === equippedId)?.name ?? 'Graphite'}
+              {COSMETICS.find((c) => c.id === equippedId)?.name ?? "Graphite"}
             </p>
             <p className="mt-0.5 text-[10.5px] text-faint">
-              {profile.handle} · {tab === 'themes' ? 'arena theme' : tab}
+              {profile.handle} · {tab === "themes" ? "arena theme" : tab}
             </p>
           </div>
           <Check className="h-4 w-4 shrink-0 text-cyan" />
@@ -100,8 +103,8 @@ export function LockerScreen() {
         {/* Grid */}
         <div className="mt-5">
           <SectionHeader
-            title={TABS.find((t) => t.id === tab)?.label ?? ''}
-            subtitle={`${items.filter((i) => i.owned || equipped[i.kind === 'frames' ? 'frames' : i.kind === 'nameplates' ? 'nameplates' : 'themes']?.includes(i.id)).length} owned`}
+            title={TABS.find((t) => t.id === tab)?.label ?? ""}
+            subtitle={`${items.filter((i) => i.owned || equipped[i.kind === "frames" ? "frames" : i.kind === "nameplates" ? "nameplates" : "themes"]?.includes(i.id)).length} owned`}
           />
           <motion.div
             variants={listStagger}
@@ -118,8 +121,8 @@ export function LockerScreen() {
                   key={item.id}
                   variants={cardRise}
                   className={cn(
-                    'surface-card overflow-hidden',
-                    isEquipped && 'border-cyan-line/50',
+                    "surface-card overflow-hidden",
+                    isEquipped && "border-cyan-line/50",
                   )}
                 >
                   <div
@@ -140,7 +143,7 @@ export function LockerScreen() {
                     <span
                       className="relative mb-2 rounded-full px-2 py-[2px] font-mono text-[8px] uppercase tracking-[0.12em]"
                       style={{
-                        background: 'rgba(9,10,15,0.7)',
+                        background: "rgba(9,10,15,0.7)",
                         color: rarity.color,
                       }}
                     >
@@ -152,30 +155,30 @@ export function LockerScreen() {
                       {item.name}
                     </p>
                     <p className="mt-0.5 line-clamp-1 text-[10px] text-faint">
-                      {owned ? 'Owned' : item.requirement}
+                      {owned ? "Owned" : item.requirement}
                     </p>
                     <button
                       disabled={!owned}
                       onClick={() => {
                         equip(item.kind, item.id);
-                        sfx.play('lock');
-                        haptics.fire('light');
+                        sfx.play("lock");
+                        haptics.fire("light");
                         toast({
                           title: `${item.name} equipped`,
-                          message: 'Cosmetic only — no gameplay effect.',
-                          tone: 'success',
+                          message: "Cosmetic only — no gameplay effect.",
+                          tone: "success",
                         });
                       }}
                       className={cn(
-                        'press mt-2 flex h-8 w-full items-center justify-center rounded-full text-[11px] font-medium',
+                        "press mt-2 flex h-8 w-full items-center justify-center rounded-full text-[11px] font-medium",
                         isEquipped
-                          ? 'bg-cyan/12 text-cyan'
+                          ? "bg-cyan/12 text-cyan"
                           : owned
-                            ? 'bg-white/8 text-ink'
-                            : 'bg-white/4 text-faint',
+                            ? "bg-white/8 text-ink"
+                            : "bg-white/4 text-faint",
                       )}
                     >
-                      {isEquipped ? 'Equipped' : owned ? 'Equip' : 'Locked'}
+                      {isEquipped ? "Equipped" : owned ? "Equip" : "Locked"}
                     </button>
                   </div>
                 </motion.div>

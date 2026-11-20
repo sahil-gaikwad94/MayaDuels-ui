@@ -1,35 +1,49 @@
-import { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Crown, Globe, Medal, TrendingDown, TrendingUp, Trophy } from 'lucide-react';
-import { Page, SectionHeader, Badge, ProgressBar } from '../components/Page';
-import { IdentityCapsule } from '../components/IdentityCapsule';
-import { AvatarToken } from '../components/AvatarToken';
-import { Sparkline } from '../components/Charts';
-import { HeroStage } from '../components/HeroStage';
-import { DEMO_LEADERS, DEMO_YOU, type LeaderRow } from '../lib/demoData';
-import { DIVISIONS, divisionFor, nextDivision } from '../lib/domains';
-import { useAppState } from '../state/AppState';
-import { cn, formatNumber } from '../lib/utils';
-import { cardRise, listStagger } from '../lib/motion';
+import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Crown,
+  Globe,
+  Medal,
+  TrendingDown,
+  TrendingUp,
+  Trophy,
+} from "lucide-react";
+import { Page, SectionHeader, Badge, ProgressBar } from "../components/Page";
+import { IdentityCapsule } from "../components/IdentityCapsule";
+import { AvatarToken } from "../components/AvatarToken";
+import { Sparkline } from "../components/Charts";
+import { HeroStage } from "../components/HeroStage";
+import { DEMO_LEADERS, DEMO_YOU, type LeaderRow } from "../lib/demoData";
+import { DIVISIONS, divisionFor, nextDivision } from "../lib/domains";
+import { useAppState } from "../state/AppState";
+import { cn, formatNumber } from "../lib/utils";
+import { cardRise, listStagger } from "../lib/motion";
 
 const SCOPES = [
-  { id: 'global', label: 'Global', icon: Globe },
-  { id: 'domain', label: 'Domain', icon: Medal },
-  { id: 'friends', label: 'Friends', icon: Trophy },
+  { id: "global", label: "Highest rating", icon: Globe },
+  { id: "wins", label: "Most wins", icon: Medal },
 ];
 
 export function RanksScreen() {
   const { profile } = useAppState();
-  const [scope, setScope] = useState('global');
+  const [scope, setScope] = useState("global");
 
   const rows = useMemo(() => {
     const base = DEMO_LEADERS.map((r) =>
-      r.handle === 'you' ? { ...r, handle: profile.handle, seed: profile.avatarSeed } : r,
+      r.handle === "you"
+        ? { ...r, handle: profile.handle, seed: profile.avatarSeed }
+        : r,
     );
-    return base;
-  }, [profile.handle, profile.avatarSeed]);
+    return scope === "wins"
+      ? base.sort((a, b) => b.wins - a.wins)
+      : base.sort((a, b) => b.rating - a.rating);
+  }, [profile.handle, profile.avatarSeed, scope]);
 
-  const you: LeaderRow = { ...DEMO_YOU, handle: profile.handle, seed: profile.avatarSeed };
+  const you: LeaderRow = {
+    ...DEMO_YOU,
+    handle: profile.handle,
+    seed: profile.avatarSeed,
+  };
   const division = divisionFor(you.rating);
   const next = nextDivision(you.rating);
   const progress = next
@@ -42,15 +56,13 @@ export function RanksScreen() {
   return (
     <div className="pb-32">
       <Page width="md" className="pt-[calc(var(--safe-t)+14px)]">
-        <IdentityCapsule />
-
         <div className="mt-6 flex items-end justify-between">
           <div>
             <h1 className="font-display text-[1.9rem] font-semibold leading-none tracking-[-0.03em]">
-              Ranks
+              Leaderboard
             </h1>
             <p className="mt-1.5 text-[12.5px] text-faint">
-              Glicko-2 · provisional ratings stay marked until settled
+              Season 01 · exhibition standings
             </p>
           </div>
           <Badge tone="cyan">{division.name}</Badge>
@@ -84,7 +96,8 @@ export function RanksScreen() {
                   {formatNumber(you.rating)}
                 </span>
                 <span className="inline-flex items-center gap-0.5 rounded-full bg-cyan/12 px-1.5 py-[1px] text-[10px] text-cyan">
-                  <TrendingUp className="h-2.5 w-2.5" />+18
+                  <TrendingUp className="h-2.5 w-2.5" />
+                  +18
                 </span>
                 {you.rank > 0 && (
                   <span className="font-mono text-[10px] text-faint">
@@ -97,7 +110,7 @@ export function RanksScreen() {
           <div className="mt-3.5">
             <div className="mb-1.5 flex justify-between font-mono text-[9.5px] text-faint">
               <>{division.name}</>
-              <>{next ? `${next.name} · ${next.min}` : 'peak'}</>
+              <>{next ? `${next.name} · ${next.min}` : "peak"}</>
             </div>
             <ProgressBar value={progress} color={division.color} height={5} />
           </div>
@@ -110,8 +123,8 @@ export function RanksScreen() {
               key={s.id}
               onClick={() => setScope(s.id)}
               className={cn(
-                'press flex flex-1 items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-[11.5px] font-medium transition-colors',
-                scope === s.id ? 'bg-white/8 text-ink' : 'text-faint',
+                "press flex flex-1 items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-[11.5px] font-medium transition-colors",
+                scope === s.id ? "bg-white/8 text-ink" : "text-faint",
               )}
             >
               <s.icon className="h-3.5 w-3.5" />
@@ -120,23 +133,15 @@ export function RanksScreen() {
           ))}
         </div>
 
-        {scope === 'friends' ? (
-          <div className="surface-card mt-3 px-6 py-9 text-center">
-            <p className="text-[13px] font-medium">No friends graph yet</p>
-            <p className="mt-1 text-[12px] text-faint">
-              Friend lists arrive with the social phase. No fabricated social
-              proof here.
-            </p>
-          </div>
-        ) : (
+        {
           <>
             {/* Podium */}
             <div className="mt-4 grid grid-cols-3 gap-2">
               {[1, 0, 2].map((idx) => {
                 const p = podium[idx];
                 if (!p) return <div key={idx} />;
-                const heights = ['h-20', 'h-24', 'h-16'];
-                const medals = ['🥈', '🥇', '🥉'];
+                const heights = ["h-20", "h-24", "h-16"];
+                const medals = ["🥈", "🥇", "🥉"];
                 return (
                   <motion.div
                     key={p.handle}
@@ -148,24 +153,28 @@ export function RanksScreen() {
                     <AvatarToken
                       seed={p.seed}
                       size={idx === 0 ? 46 : 38}
-                      ring={idx === 0 ? '#FFB800' : '#9FB4C7'}
+                      ring={idx === 0 ? "#FFB800" : "#9FB4C7"}
                     />
                     <p className="mt-1.5 w-full truncate text-center text-[11px] font-medium text-ink">
                       {p.handle}
                     </p>
                     <p className="tnum font-mono text-[10.5px] text-faint">
-                      {formatNumber(p.rating)}
+                      {scope === "wins"
+                        ? `${p.wins} wins`
+                        : formatNumber(p.rating)}
                     </p>
                     <div
                       className={cn(
-                        'mt-1.5 flex w-full items-start justify-center rounded-t-xl border border-b-0 pt-1.5',
-                        heights[idx],
+                        "mt-1.5 flex w-full items-start justify-center rounded-t-xl border border-b-0 pt-1.5",
+                        idx === 0 ? "h-24" : idx === 1 ? "h-20" : "h-16",
                         idx === 0
-                          ? 'border-amber/30 bg-gradient-to-t from-amber/12 to-transparent'
-                          : 'border-line bg-white/4',
+                          ? "border-amber/30 bg-gradient-to-t from-amber/12 to-transparent"
+                          : "border-line bg-white/4",
                       )}
                     >
-                      <span className="text-sm">{medals[idx]}</span>
+                      <span className="text-sm">
+                        {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"}
+                      </span>
                     </div>
                   </motion.div>
                 );
@@ -175,8 +184,8 @@ export function RanksScreen() {
             {/* Table */}
             <div className="mt-4">
               <SectionHeader
-                title={scope === 'global' ? 'Global leaderboard' : 'Domain leaderboard'}
-                subtitle="Top 12 · rating and movement"
+                title={scope === "global" ? "Global leaderboard" : "Most wins"}
+                subtitle="Season standings · rating and movement"
               />
               <div className="surface-card divide-y divide-line">
                 {rest.map((r, i) => (
@@ -202,12 +211,12 @@ export function RanksScreen() {
                     </span>
                     <span
                       className={cn(
-                        'flex w-11 items-center justify-end gap-0.5 font-mono text-[10px]',
+                        "flex w-11 items-center justify-end gap-0.5 font-mono text-[10px]",
                         r.trend > 0
-                          ? 'text-cyan'
+                          ? "text-cyan"
                           : r.trend < 0
-                            ? 'text-error'
-                            : 'text-faint',
+                            ? "text-error"
+                            : "text-faint",
                       )}
                     >
                       {r.trend > 0 ? (
@@ -230,7 +239,8 @@ export function RanksScreen() {
               <AvatarToken seed={you.seed} size={30} ring="#00F5D4" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[12px] font-semibold text-ink">
-                  {you.handle} <span className="text-[10px] text-cyan">you</span>
+                  {you.handle}{" "}
+                  <span className="text-[10px] text-cyan">you</span>
                 </p>
                 <p className="font-mono text-[9.5px] text-faint">
                   {you.wins}W · {you.matches}M
@@ -240,37 +250,46 @@ export function RanksScreen() {
                 {formatNumber(you.rating)}
               </span>
               <span className="flex w-11 items-center justify-end gap-0.5 font-mono text-[10px] text-cyan">
-                <TrendingUp className="h-2.5 w-2.5" />18
+                <TrendingUp className="h-2.5 w-2.5" />
+                18
               </span>
             </div>
 
             {/* Divisions ladder */}
             <div className="mt-5">
-              <SectionHeader title="Divisions" subtitle="Thresholds set after rating simulation" />
+              <SectionHeader
+                title="Divisions"
+                subtitle="Thresholds set after rating simulation"
+              />
               <div className="surface-card p-3.5">
                 <div className="flex items-center justify-between gap-1">
                   {DIVISIONS.map((d, i) => {
                     const reached = you.rating >= d.min;
                     return (
-                      <div key={d.name} className="flex flex-1 flex-col items-center gap-1.5">
+                      <div
+                        key={d.name}
+                        className="flex flex-1 flex-col items-center gap-1.5"
+                      >
                         <div className="flex w-full items-center">
                           <div
                             className="h-[3px] flex-1 rounded-full"
                             style={{
-                              background: reached ? d.color : 'rgba(255,255,255,0.08)',
+                              background: reached
+                                ? d.color
+                                : "rgba(255,255,255,0.08)",
                             }}
                           />
                           {i < DIVISIONS.length - 1 && (
                             <div
                               className="h-[3px] w-2"
-                              style={{ background: 'rgba(255,255,255,0.08)' }}
+                              style={{ background: "rgba(255,255,255,0.08)" }}
                             />
                           )}
                         </div>
                         <span
                           className={cn(
-                            'text-center text-[9px] leading-tight',
-                            reached ? 'text-muted' : 'text-faint/60',
+                            "text-center text-[9px] leading-tight",
+                            reached ? "text-muted" : "text-faint/60",
                           )}
                         >
                           {d.name}
@@ -281,15 +300,17 @@ export function RanksScreen() {
                 </div>
                 <div className="mt-3 flex items-center gap-2 rounded-xl border border-line bg-black/25 p-2.5">
                   <Sparkline
-                    data={[1320, 1348, 1331, 1372, 1390, 1384, 1421, 1440, 1436, 1462, 1470, 1482]}
+                    data={[
+                      1320, 1348, 1331, 1372, 1390, 1384, 1421, 1440, 1436,
+                      1462, 1470, 1482,
+                    ]}
                     color="#00F5D4"
                     width={110}
                     height={32}
                   />
                   <p className="text-[10.5px] leading-snug text-faint">
-                    Your rating moved{' '}
-                    <span className="text-cyan">+162</span> over the last 12
-                    matches.
+                    Your rating moved <span className="text-cyan">+162</span>{" "}
+                    over the last 12 matches.
                   </p>
                 </div>
               </div>
@@ -300,7 +321,7 @@ export function RanksScreen() {
               Percentiles are hidden until population coverage is valid.
             </p>
           </>
-        )}
+        }
       </Page>
     </div>
   );

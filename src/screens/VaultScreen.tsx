@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { Link, useSearchParams } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
   Bookmark,
@@ -8,51 +9,28 @@ import {
   Layers,
   RotateCcw,
   Trash2,
-} from 'lucide-react';
-import { Page, SectionHeader, Badge, ProgressBar } from '../components/Page';
-import { IdentityCapsule } from '../components/IdentityCapsule';
-import { getDomain, DOMAINS } from '../lib/domains';
-import { DEMO_VAULT } from '../lib/demoData';
-import { useAppState } from '../state/AppState';
-import { cn } from '../lib/utils';
-import { cardRise, listStagger } from '../lib/motion';
-import { sfx, haptics } from '../lib/audio';
+} from "lucide-react";
+import { Page, SectionHeader, Badge, ProgressBar } from "../components/Page";
+import { IdentityCapsule } from "../components/IdentityCapsule";
+import { getDomain, DOMAINS } from "../lib/domains";
+import { DEMO_VAULT } from "../lib/demoData";
+import { useAppState } from "../state/AppState";
+import { cn } from "../lib/utils";
+import { cardRise, listStagger } from "../lib/motion";
+import { sfx, haptics } from "../lib/audio";
 
-type Tab = 'due' | 'missed' | 'mastered' | 'saved';
+type Tab = "due" | "missed" | "mastered" | "saved";
 
 export function VaultScreen() {
   const { vault, reviewVaultItem, removeVaultItem, toast } = useAppState();
-  const [tab, setTab] = useState<Tab>('due');
+  const [params] = useSearchParams();
+  const [tab, setTab] = useState<Tab>(
+    params.get("mode") === "weakness" ? "missed" : "due",
+  );
   const [reviewing, setReviewing] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
 
-  // Merge locally saved items with the seeded demo set.
-  const items = useMemo(() => {
-    const seedItems = DEMO_VAULT.map((s) => {
-      const local = vault.find((v) => v.conceptId === s.conceptId);
-      if (local) return local;
-      const due = new Date();
-      due.setDate(due.getDate() + s.dueInDays);
-      return {
-        id: `seed_${s.conceptId}`,
-        conceptId: s.conceptId,
-        concept: s.concept,
-        domainId: s.domainId,
-        principle: s.principle,
-        why: s.why,
-        tradeoff: s.tradeoff,
-        savedAt: new Date().toISOString(),
-        stage: s.stage,
-        dueAt: due.toISOString(),
-        missCount: s.missCount,
-        lastResult: null,
-      };
-    });
-    const map = new Map<string, (typeof seedItems)[number]>();
-    [...vault, ...seedItems].forEach((i) => map.set(i.conceptId, i));
-    return Array.from(map.values());
-  }, [vault]);
-
+  const items = vault;
   const now = Date.now();
   const due = items.filter((i) => new Date(i.dueAt).getTime() <= now);
   const missed = items.filter((i) => i.missCount > 0);
@@ -67,26 +45,60 @@ export function VaultScreen() {
   };
 
   const visible =
-    tab === 'due' ? due : tab === 'missed' ? missed : tab === 'mastered' ? mastered : saved;
+    tab === "due"
+      ? due
+      : tab === "missed"
+        ? missed
+        : tab === "mastered"
+          ? mastered
+          : saved;
 
-  const active = reviewing ? items.find((i) => i.conceptId === reviewing) : null;
+  const active = reviewing
+    ? items.find((i) => i.conceptId === reviewing)
+    : null;
 
   const handleReview = (correct: boolean) => {
     if (!active) return;
     reviewVaultItem(active.conceptId, correct);
-    sfx.play(correct ? 'correct' : 'incorrect');
-    haptics.fire(correct ? 'success' : 'error');
+    sfx.play(correct ? "correct" : "incorrect");
+    haptics.fire(correct ? "success" : "error");
     toast({
-      title: correct ? 'Review complete' : 'Scheduled sooner',
+      title: correct ? "Review complete" : "Scheduled sooner",
       message: correct
         ? `${active.concept} moves up a review stage.`
         : `${active.concept} returns earlier — no penalty.`,
-      tone: correct ? 'success' : 'default',
+      tone: correct ? "success" : "default",
     });
     setReviewing(null);
     setRevealed(false);
   };
 
+  if (!items.length)
+    return (
+      <div className="play-floor catalog">
+        <div className="overline">
+          <Layers size={14} /> PLAYER COLLECTION
+        </div>
+        <h1>
+          Concept vault<span>.</span>
+        </h1>
+        <p>Your personal deck of engineering mental models.</p>
+        <section className="vault-start">
+          <img src="/arcade/disk.webp" alt="Two collectible floppy disks" />
+          <div>
+            <small>COLLECTION / 00</small>
+            <h2>Save your first concept.</h2>
+            <p>
+              After a round, save the explanation to your vault. Come back here
+              to test your recall and schedule your next review.
+            </p>
+            <Link className="play-key" to="/queue">
+              Play a duel <ArrowRight size={15} />
+            </Link>
+          </div>
+        </section>
+      </div>
+    );
   if (active) {
     return (
       <div className="pb-32">
@@ -114,7 +126,7 @@ export function VaultScreen() {
                 stage {active.stage + 1} / 5
               </span>
               <span className="rounded-full border border-line bg-black/25 px-2 py-[3px] font-mono text-[9px] uppercase tracking-[0.12em] text-faint">
-                {active.missCount} miss{active.missCount === 1 ? '' : 'es'}
+                {active.missCount} miss{active.missCount === 1 ? "" : "es"}
               </span>
             </div>
           </div>
@@ -180,12 +192,10 @@ export function VaultScreen() {
   return (
     <div className="pb-32">
       <Page width="md" className="pt-[calc(var(--safe-t)+14px)]">
-        <IdentityCapsule />
-
         <div className="mt-6 flex items-end justify-between">
           <div>
             <h1 className="font-display text-[1.9rem] font-semibold leading-none tracking-[-0.03em]">
-              Knowledge Vault
+              Concept vault
             </h1>
             <p className="mt-1.5 text-[12.5px] text-faint">
               {items.length} concepts · {due.length} due now
@@ -200,18 +210,18 @@ export function VaultScreen() {
         <div className="mt-4 flex rounded-full border border-line bg-surface/60 p-1">
           {(
             [
-              { id: 'due', label: 'Due' },
-              { id: 'missed', label: 'Missed' },
-              { id: 'mastered', label: 'Mastered' },
-              { id: 'saved', label: 'All' },
+              { id: "due", label: "Due" },
+              { id: "missed", label: "Missed" },
+              { id: "mastered", label: "Mastered" },
+              { id: "saved", label: "All" },
             ] as const
           ).map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
               className={cn(
-                'press flex-1 rounded-full px-2 py-1.5 text-[11.5px] font-medium transition-colors',
-                tab === t.id ? 'bg-white/8 text-ink' : 'text-faint',
+                "press flex-1 rounded-full px-2 py-1.5 text-[11.5px] font-medium transition-colors",
+                tab === t.id ? "bg-white/8 text-ink" : "text-faint",
               )}
             >
               {t.label}
@@ -239,7 +249,7 @@ export function VaultScreen() {
                     className="h-1.5 rounded-full"
                     style={{
                       background:
-                        count > 0 ? '#00F5D4' : 'rgba(255,255,255,0.08)',
+                        count > 0 ? "#00F5D4" : "rgba(255,255,255,0.08)",
                       opacity: count > 0 ? 0.4 + stage * 0.15 : 1,
                     }}
                   />
@@ -256,17 +266,17 @@ export function VaultScreen() {
         <div className="mt-4">
           <SectionHeader
             title={
-              tab === 'due'
-                ? 'Due for review'
-                : tab === 'missed'
-                  ? 'Missed concepts'
-                  : tab === 'mastered'
-                    ? 'Recently mastered'
-                    : 'All saved'
+              tab === "due"
+                ? "Due for review"
+                : tab === "missed"
+                  ? "Missed concepts"
+                  : tab === "mastered"
+                    ? "Recently mastered"
+                    : "All saved"
             }
             subtitle={
-              tab === 'due'
-                ? 'Short recall, then schedule the next interval'
+              tab === "due"
+                ? "Short recall, then schedule the next interval"
                 : undefined
             }
           />
@@ -309,15 +319,18 @@ export function VaultScreen() {
                         <span className="inline-flex items-center gap-1">
                           <Clock className="h-2.5 w-2.5" />
                           {isDue
-                            ? 'now'
+                            ? "now"
                             : `${Math.max(
                                 1,
                                 Math.round(
-                                  (new Date(item.dueAt).getTime() - now) / 86400000,
+                                  (new Date(item.dueAt).getTime() - now) /
+                                    86400000,
                                 ),
                               )}d`}
                         </span>
-                        <span className="ml-auto font-mono">stage {item.stage + 1}</span>
+                        <span className="ml-auto font-mono">
+                          stage {item.stage + 1}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -326,7 +339,7 @@ export function VaultScreen() {
                       onClick={() => {
                         setReviewing(item.conceptId);
                         setRevealed(false);
-                        sfx.play('tap');
+                        sfx.play("tap");
                       }}
                       className="press flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full bg-cyan/12 text-[12px] font-medium text-cyan"
                     >
@@ -335,8 +348,8 @@ export function VaultScreen() {
                     <button
                       onClick={() => {
                         removeVaultItem(item.conceptId);
-                        sfx.play('tap');
-                        toast({ title: 'Removed from Vault', tone: 'default' });
+                        sfx.play("tap");
+                        toast({ title: "Removed from Vault", tone: "default" });
                       }}
                       aria-label={`Remove ${item.concept}`}
                       className="press flex h-9 w-9 items-center justify-center rounded-full border border-line text-faint hover:text-error"
@@ -356,12 +369,12 @@ export function VaultScreen() {
               <Bookmark className="h-5 w-5 text-faint" />
             </div>
             <p className="mt-3 text-[13px] font-medium">
-              {tab === 'due' ? 'Nothing due right now' : 'Nothing here yet'}
+              {tab === "due" ? "Nothing due right now" : "Nothing here yet"}
             </p>
             <p className="mt-1 max-w-[250px] text-[12px] leading-snug text-faint">
-              {tab === 'due'
-                ? 'Play a duel or two — missed concepts land here automatically.'
-                : 'Save concepts from a match Q&A to build your Vault.'}
+              {tab === "due"
+                ? "Play a duel or two — missed concepts land here automatically."
+                : "Save concepts from a match Q&A to build your Vault."}
             </p>
           </div>
         )}
@@ -369,7 +382,7 @@ export function VaultScreen() {
         <div className="mt-5 rounded-2xl border border-line bg-surface/50 p-3.5">
           <p className="text-[11px] leading-relaxed text-faint">
             <span className="text-muted">Domain coverage · </span>
-            {DOMAINS.map((d) => d.short).join(' · ')}
+            {DOMAINS.map((d) => d.short).join(" · ")}
           </p>
         </div>
       </Page>

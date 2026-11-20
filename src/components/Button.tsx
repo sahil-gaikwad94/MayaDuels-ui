@@ -6,7 +6,7 @@ type Size = 'sm' | 'md' | 'lg';
 
 const variants: Record<Variant, string> = {
   primary:
-    'bg-cyan text-[#04120F] hover:bg-[#3BFFE4] active:bg-[#00D9BC] shadow-[0_16px_40px_-16px_rgba(0,245,212,0.65)]',
+    'bg-[#27251f] text-[#fffbec] hover:bg-[#434035] active:bg-black shadow-[0_3px_0_#b7ac94]',
   secondary:
     'bg-raised text-ink border border-line hover:border-line-strong hover:bg-elevated',
   ghost: 'bg-transparent text-muted hover:text-ink hover:bg-white/5',
@@ -18,9 +18,9 @@ const variants: Record<Variant, string> = {
 };
 
 const sizes: Record<Size, string> = {
-  sm: 'h-9 px-3.5 text-[13px] rounded-full gap-1.5',
-  md: 'h-12 px-5 text-[15px] rounded-full gap-2',
-  lg: 'h-14 px-7 text-base rounded-full gap-2.5',
+  sm: 'h-9 px-3.5 text-[13px] rounded-xl gap-1.5',
+  md: 'h-12 px-5 text-[15px] rounded-xl gap-2',
+  lg: 'h-14 px-7 text-base rounded-xl gap-2.5',
 };
 
 export interface ButtonProps

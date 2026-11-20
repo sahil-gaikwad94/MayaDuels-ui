@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
   BookOpen,
@@ -11,16 +11,16 @@ import {
   Sparkles,
   TrendingDown,
   TrendingUp,
-} from 'lucide-react';
-import { Page, Badge } from '../components/Page';
-import { HeroStage } from '../components/HeroStage';
-import { Button } from '../components/Button';
-import { AvatarToken } from '../components/AvatarToken';
-import { getDomain, divisionFor } from '../lib/domains';
-import { useAppState } from '../state/AppState';
-import { cn, formatDelta, formatNumber } from '../lib/utils';
-import { sfx, haptics } from '../lib/audio';
-import type { DuelState } from '../lib/duel';
+} from "lucide-react";
+import { Page, Badge } from "../components/Page";
+import { HeroStage } from "../components/HeroStage";
+import { Button } from "../components/Button";
+import { AvatarToken } from "../components/AvatarToken";
+import { getDomain, divisionFor } from "../lib/domains";
+import { useAppState } from "../state/AppState";
+import { cn, formatDelta, formatNumber } from "../lib/utils";
+import { sfx, haptics } from "../lib/audio";
+import type { DuelState } from "../lib/duel";
 
 function useCountUp(target: number, duration = 900) {
   const [value, setValue] = useState(0);
@@ -42,11 +42,10 @@ function useCountUp(target: number, duration = 900) {
 export function ResultScreen() {
   const navigate = useNavigate();
   const { profile, toast } = useAppState();
-  const [skipped, setSkipped] = useState(false);
 
   const duel = useMemo<DuelState | null>(() => {
     try {
-      const raw = sessionStorage.getItem('mayaduels.lastDuel');
+      const raw = sessionStorage.getItem("mayaduels.lastDuel");
       return raw ? (JSON.parse(raw) as DuelState) : null;
     } catch {
       return null;
@@ -55,13 +54,17 @@ export function ResultScreen() {
 
   useEffect(() => {
     if (!duel) {
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
       return;
     }
     sfx.play(
-      duel.outcome === 'WIN' ? 'win' : duel.outcome === 'LOSS' ? 'loss' : 'draw',
+      duel.outcome === "WIN"
+        ? "win"
+        : duel.outcome === "LOSS"
+          ? "loss"
+          : "draw",
     );
-    haptics.fire(duel.outcome === 'WIN' ? 'success' : 'medium');
+    haptics.fire(duel.outcome === "WIN" ? "success" : "medium");
   }, [duel, navigate]);
 
   const animatedScore = useCountUp(duel?.selfScore ?? 0);
@@ -70,9 +73,9 @@ export function ResultScreen() {
   if (!duel) return null;
 
   const domain = getDomain(duel.domainId);
-  const won = duel.outcome === 'WIN';
-  const drew = duel.outcome === 'DRAW';
-  const accent = won ? '#00F5D4' : drew ? '#9FB4C7' : '#FF5C67';
+  const won = duel.outcome === "WIN";
+  const drew = duel.outcome === "DRAW";
+  const accent = won ? "#00F5D4" : drew ? "#9FB4C7" : "#FF5C67";
   const division = divisionFor(duel.selfRatingAfter);
   const correctCount = duel.rounds.filter((r) => r.self?.correct).length;
   const accuracy = Math.round((correctCount / duel.rounds.length) * 100);
@@ -87,7 +90,9 @@ export function ResultScreen() {
   ).best;
 
   // Average verified response time across answered rounds.
-  const answered = duel.rounds.filter((r) => r.self && r.self.status === 'answered');
+  const answered = duel.rounds.filter(
+    (r) => r.self && r.self.status === "answered",
+  );
   const avgTime = answered.length
     ? answered.reduce((sum, r) => sum + (r.self?.elapsedMs ?? 0), 0) /
       answered.length /
@@ -99,7 +104,7 @@ export function ResultScreen() {
       <Page width="sm" className="pt-[calc(var(--safe-t)+12px)]">
         <div className="flex items-center justify-between">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate("/")}
             aria-label="Home"
             className="press flex h-10 w-10 items-center justify-center rounded-full border border-line text-muted"
           >
@@ -107,13 +112,15 @@ export function ResultScreen() {
           </button>
           <span className="label-mono">{domain.arena} · Blitz</span>
           <button
-            onClick={() => {
-              sfx.play('tap');
-              toast({
-                title: 'Result card copied',
-                message: 'Spoiler-safe share text is ready to paste.',
-                tone: 'success',
-              });
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(
+                  `MayaDuels · ${domain.arena} · ${duel.outcome} · ${duel.selfScore} : ${duel.opponentScore}`,
+                );
+                toast({ title: "Match summary copied", tone: "success" });
+              } catch {
+                toast({ title: "Clipboard unavailable", tone: "error" });
+              }
             }}
             aria-label="Share result"
             className="press flex h-10 w-10 items-center justify-center rounded-full border border-line text-muted"
@@ -122,45 +129,27 @@ export function ResultScreen() {
           </button>
         </div>
 
-        {/* Outcome hero */}
-        <div className="relative mt-3 flex flex-col items-center">
-          {!skipped && (
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-[240px]">
-              <HeroStage
-                kind={won ? 'trophy' : 'core'}
-                accent={accent}
-                intensity="hero"
-                zoom={3.0}
-                className="h-full w-full"
-                label={won ? 'Victory trophy' : 'Match core'}
-              />
-            </div>
-          )}
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: skipped ? 0 : 0.18, duration: 0.4 }}
-            className="relative z-10 mt-[104px] text-center"
-          >
-            <Badge tone={won ? 'cyan' : drew ? 'neutral' : 'error'}>
-              {duel.ratingEligible ? 'ranked result' : 'practice progress'}
-            </Badge>
-            <h1
-              className="mt-2.5 font-display text-[2.6rem] font-semibold leading-none tracking-[-0.04em]"
-              style={{ color: accent }}
-            >
-              {won ? 'Victory' : drew ? 'Draw' : 'Defeat'}
-            </h1>
-            <p className="mt-2 text-[12.5px] text-faint">
-              {won
-                ? 'Clean read. You out-scored your rival.'
-                : drew
-                  ? 'Dead even. Nothing separated the two decks.'
-                  : 'A gap showed up. The Q&A shows exactly where.'}
-            </p>
-          </motion.div>
-        </div>
-
+        <section className="result-ticket">
+          <small>ARCADE RECEIPT / BLITZ DUEL</small>
+          <h1>{won ? "Victory!" : drew ? "Draw game." : "Game over."}</h1>
+          <p>
+            {won
+              ? "You outscored your rival."
+              : drew
+                ? "You and your rival finished level."
+                : "Your next advantage is in the review."}
+          </p>
+          <div className="tear" />
+          <div className="receipt-line">
+            <span>ACCURACY</span>
+            <b>{correctCount} / 8</b>
+          </div>
+          <div className="receipt-line">
+            <span>MODE</span>
+            <b>{duel.ratingEligible ? "Ranked" : "Practice"}</b>
+          </div>
+          <div className="barcode" />
+        </section>
         {/* Score comparison */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -191,7 +180,11 @@ export function ResultScreen() {
             </div>
 
             <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
-              <AvatarToken seed={duel.startedAt % 97} size={38} ring="#FF2A85" />
+              <AvatarToken
+                seed={duel.startedAt % 97}
+                size={38}
+                ring="#FF2A85"
+              />
               <p className="max-w-full truncate text-[11.5px] font-medium text-muted">
                 {duel.opponentName}
               </p>
@@ -204,9 +197,12 @@ export function ResultScreen() {
 
           <div className="mt-3.5 grid grid-cols-3 gap-2 border-t border-line pt-3">
             {[
-              { label: 'Accuracy', value: `${accuracy}%` },
-              { label: 'Best streak', value: `${bestStreak}` },
-              { label: 'Avg time', value: avgTime ? `${avgTime.toFixed(1)}s` : '—' },
+              { label: "Accuracy", value: `${accuracy}%` },
+              { label: "Best streak", value: `${bestStreak}` },
+              {
+                label: "Avg time",
+                value: avgTime ? `${avgTime.toFixed(1)}s` : "—",
+              },
             ].map((s) => (
               <div key={s.label} className="text-center">
                 <p className="label-mono text-[8.5px]">{s.label}</p>
@@ -228,7 +224,7 @@ export function ResultScreen() {
           <div className="flex items-center justify-between">
             <div>
               <p className="label-mono">
-                {duel.ratingEligible ? 'Rating' : 'Provisional rating'}
+                {duel.ratingEligible ? "Rating" : "Provisional rating"}
               </p>
               <div className="mt-1 flex items-end gap-2">
                 <span className="tnum font-display text-[26px] font-semibold leading-none">
@@ -236,10 +232,10 @@ export function ResultScreen() {
                 </span>
                 <span
                   className={cn(
-                    'mb-0.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                    "mb-0.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
                     duel.ratingDelta >= 0
-                      ? 'bg-cyan/12 text-cyan'
-                      : 'bg-error/12 text-error',
+                      ? "bg-cyan/12 text-cyan"
+                      : "bg-error/12 text-error",
                   )}
                 >
                   {duel.ratingDelta >= 0 ? (
@@ -252,7 +248,8 @@ export function ResultScreen() {
               </div>
               <p className="mt-1.5 text-[11px] text-faint">
                 {division.name} division
-                {!duel.ratingEligible && ' · arena rival matches do not affect ranked rating'}
+                {!duel.ratingEligible &&
+                  " · arena rival matches do not affect ranked rating"}
               </p>
             </div>
             <div className="text-right">
@@ -289,7 +286,7 @@ export function ResultScreen() {
           <Button
             size="lg"
             full
-            onClick={() => navigate('/match')}
+            onClick={() => navigate("/match")}
             trailingIcon={<ArrowRight className="h-4 w-4 opacity-70" />}
             icon={<BookOpen className="h-[18px] w-[18px]" />}
           >
@@ -298,27 +295,19 @@ export function ResultScreen() {
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant="secondary"
-              onClick={() => navigate('/queue')}
+              onClick={() => navigate("/queue")}
               icon={<RotateCcw className="h-4 w-4" />}
             >
               Rematch
             </Button>
             <Button
               variant="secondary"
-              onClick={() => navigate('/')}
+              onClick={() => navigate("/")}
               icon={<Check className="h-4 w-4" />}
             >
               Queue next
             </Button>
           </div>
-          {!skipped && (
-            <button
-              onClick={() => setSkipped(true)}
-              className="press w-full py-1.5 text-center text-[11px] text-faint"
-            >
-              Skip celebration
-            </button>
-          )}
         </div>
 
         <p className="mt-4 text-center text-[10.5px] leading-relaxed text-faint/70">
